@@ -4,3 +4,158 @@ format: html
 ---
 
 # February 14th
+
+```{r}
+packages <- c(
+  'ISLR2',
+  'dplyr',
+  'tidyr',
+  'readr',
+  'purrr',
+  'glmnet',
+  'caret',
+  'car'
+)
+
+library(ISLR2)
+library(dplyr)
+library(tidyr)
+library(purrr)
+library(readr)
+library(glmnet)
+library(caret)
+library(car)
+
+lapply(packages, require, character.only=TRUE)
+
+```
+
+### Multicolinearity
+
+```{r}
+df <- Boston
+attach(Boston)
+```
+
+Explanation of the variables
+
+* 506 observations on 14 variables
+* only categorical variable is 'chas'
+
+```{r}
+# use . to include all variables
+# for just intercept, use '1'
+full_model <- lm(medv ~ ., df)
+summary(full_model)
+broom::tidy(full_model)
+```
+All variables are significant other than the industry and age
+
+
+When done by itself, a variable is very significant, but when done with other $p$-values then the variable may not be significant (ex. indus)
+
+* If $p$-value is < 0.05, then you reject the null as you have significant evidence for the alternative hypothesis
+```{r}
+# indus compared to med value
+# 
+# age vs med value summary/lm
+# 
+# 
+# for age, when holding all the other variables constant, and increase age by 1, the med value will increase by _____ (0.003611) --> if some variables are related, then by increasing age, the other variables will change
+
+```
+
+
+#### Correlation plots/tables
+```{r}
+R <- df %>%
+  keep(is.numeric) %>%
+  cor()
+R
+
+```
+* Correlations are between -1 and 1
+* Can come up with $p$-value for a correlatin value to see if 
+
+```{r}
+library(corrplot)
+corrplot(R, type = 'upper', order = 'hclust')
+```
+* Can't isolate effect of indus and nox as they are related so won't be able to hold
+one constant while increasing the other
+* tax is negatively correlated with indus (total num of business) --> if number of businesses in neighborhood go up then the distance to a business district decreases/goes down
+
+
+```{r}
+new_cols <- colnames(df)[-c(5,13)]
+model <- lm(medv ~ ., df %>% select(-c(indus, nox, dis)))
+summary(model)
+```
+* Variance inflation = if you have 2 variables that are highly corelated with one another, if you change one variable, then you would expect change in the other variable in the same direction
+
+1. variance is used to compute standard errors
+1. if standard error goes up, then $p$-value goes up, then it becomes more significant & less likely to reject the null hypothesis 
+1. inflating it with sum of other variables 
+1. high variance inflation = gets very high, so it becomes very insignificant
+
+
+```{r}
+# inflation variance factor table
+library(car)
+library(knitr)
+library(rmarkdown)
+vif_model <- lm(medv ~ ., df)
+vif(vif_model) %>% knitr::kable()
+```
+* can drop a subset of the variables that don't explain enough the variability in the $R^2$
+* by adding mroe variables, $R^2$ goes up --> now you can ask what variables leads to the highest increase in $R^2$ /more significant/good predictors and have low variance inflation 
+* high inflation factor = anything greater than 2 
+* low inflation factor = anything less than 2
+
+
+### Stepwise Regression
+```{r}
+null_model <- lm(medv ~ 1,df)
+full_model <- lm(medv ~ .,df)
+```
+
+* forward selection --> no covariates --> add each covariates 1 by 1, and increases $R^2$ by the variables importance
+```{r}
+library(caret)
+forward_model <- step(null_model, direction = 'forward', scope = formula(full_model))
+summary(forward_model)
+```
+* The lower the AIC value, the better
+* The AIC next to each variable, says which variable that would be added next would make the AIC value the lowest
+* lstat is first one added as it makes the AIC value the smallest out of all the variables
+* forward selection --> keep building model by including variables
+* at the end, if you add age or indus, the AIC value increases, which means you should stop before adding those variables
+
+
+
+* backward selection --> start with full model and remove variables to see ones result in a decrease in the AIC value
+```{r}
+backward_model <- step(full_model, direction = 'backward', scope = formula(null_model))
+summary(backward_model)
+```
+* removes variables that would give it a higher AIC until there are no more of that type
+* forward selection and backward selection DON'T always give us the same model
+
+```{r}
+selected_model <- step(full_model, direction = 'both', scope = formula(full_model))
+summary(selected_model)
+```
+
+```{r}
+summary(full_model)
+summary(selected_model)
+```
+### Variable Selection
+
+
+### Shirnkage Estimators
+
+
+
+
+# February 16th
