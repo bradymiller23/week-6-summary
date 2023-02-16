@@ -2,10 +2,10 @@
 title: "Weekly Summary Template"
 author: "Brady Miller"
 title-block-banner: true
-title-block-style: default 
+title-block-style: default  
 toc: true
-# format: html
-format: pdf
+format: html
+# format: pdf
 --- 
 
 ---
