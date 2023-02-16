@@ -1,16 +1,16 @@
 ---
 title: "Weekly Summary Template"
-author: "Author Name"
+author: "Brady Miller"
 title-block-banner: true
-title-block-style: default
+title-block-style: default 
 toc: true
-format: html
-# format: pdf
----
+# format: html
+format: pdf
+--- 
 
 ---
 
-## Tuesday, Jan 17
+## Tuesday, Feb 16
 
 ::: {.callout-important}
 ## TIL
@@ -19,32 +19,159 @@ Include a _very brief_ summary of what you learnt in this class here.
 
 Today, I learnt the following concepts in class:
 
-1. Item 1
-1. Item 2
-1. Item 3
+1. How to make a correlation plot and its interpretation
+1. Variance inflation
+1. Step-wise Regression
 :::
 
-Provide more concrete details here. You can also use footenotes[^footnote] if you like
-
-```{R results='hide'}
-#| output: false
+```{r}
+# loading in necessary libraries and datasets
+library(ISLR2)
 library(dplyr)
+library(tidyr)
 library(purrr)
+library(readr)
+library(glmnet)
+library(caret)
+library(car)
+
+df <- Boston
+attach(Boston)
 ```
 
 
-For example: 
-in class we learnt we learnt about the `map` function from the `purrr` package. 
+#### Correlation Plot
+```{r}
+# creates new data frame that outputs correlation table with numeric values
+R <- df %>%
+  keep(is.numeric) %>%
+  cor()
+R
+```
+* Correlation can range between [-1,1]
+  1. Close to 1 = strong positive correlation(as one variable increases, the 
+                  other variable increases)
+  1. Close to -1 = strong negative correlation(as one variable increases, the 
+                  other variable decreases)
+  1. Close to 0 = very weak/no correlation between variables
+  
+* Can come up with a $p$-value for a correlation value to see if there is a 
+  relationship between 2 variables (see if one is a good predictor of another)
 
 
-```{R results='hide', fig.width=7, fig.height=7}
-par(mfrow=c(3, 3), mar=c(3.5, 3.5, 2, 1), mgp=c(2.4, 0.8, 0))
-map(1:9, function(i)rnorm(1000) %>% hist(., main=i, col=i))
+```{r}
+# creates correlation plot
+library(corrplot)
+corrplot(R, type = 'upper', order = 'hclust')
+
+```
+* Red = negative correlation 
+* Blue = positive correlation
+
+* Can't isolate effect of indus and nox as they are related so won't be able to
+  hold one constant while increasing the other (have very high correlation)
+* Tax is negatively correlated with indus (total nuberm of business), so if the 
+  number of businesses in neighborhood goes up, then the distance from that 
+  given house to a business district decreases/goes down
+
+
+#### Variance Inflation
+
+```{r}
+# creating new model that we can use to investigate variance inflation
+new_cols <- colnames(df)[-c(5,13)]
+model <- lm(medv ~ ., df %>% select(-c(indus, nox, dis)))
+summary(model)
+```
+* Variance inflation = if you have 2 variables that are highly correlated with 
+                       one another, if you change one variable, then you would 
+                       expect change in the other variable in the same direction
+                       (can't hold that variable constant while increasing the 
+                       other).
+
+1. variance is used to compute standard errors
+1. if standard error goes up, then $p$-value goes up, so it becomes more 
+   significant & less likely to reject the null hypothesis 
+1. inflating it with sum of other variables 
+1. high variance inflation = gets very high, so it becomes very insignificant
+
+
+```{r}
+# inflation variance factor table
+library(car)
+library(knitr)
+library(rmarkdown)
+vif_model <- lm(medv ~ ., df)
+vif(vif_model) %>% knitr::kable()
+```
+* This table measures the of the amount of multicolinearity in a set of 
+  multiple regression variables.
+* high inflation factor = anything greater than 2 
+* low inflation factor = anything less than 2
+
+
+
+
+#### Stepwise Regression
+* can drop a subset of the variables that don't explain enough the variability
+  in the $R^2$
+* by adding more variables, $R^2$ goes up --> now you can ask what variables 
+  leads to the highest increase in $R^2$ /more significant/good predictors 
+  and have low variance inflation 
+
+```{r}
+# Null model only uses the intercept for the model predicting median house price
+null_model <- lm(medv ~ 1,df)
+null_model
+# Full model utilizes all variables in the prediction of median house price
+full_model <- lm(medv ~ .,df)
+full_model
+```
+
+###### Forward Selection
+* Starts with no covariates
+* Add each covariate 1 by 1 in order of variables importance, increasing $R^2$ 
+```{r}
+# uses step function to run this
+forward_model <- step(null_model, direction = 'forward', 
+                      scope = formula(full_model))
+summary(forward_model)
+```
+* The lower the AIC value, the better
+* Add the variables that have the result in the lowest AIC value at that point
+* The AIC next to each variable, says which variable that would be added next 
+  would make the AIC value the lowest
+* lstat is first one added as it makes the AIC value the smallest out of all the 
+  variables
+* forward selection --> keep building model by including variables
+* at the end, if you add age or indus, the AIC value increases, which means you
+  should stop before adding those variables (don't use those variables in the 
+  model)
+
+
+
+###### Backward Selection
+* Start with full model
+* Remove variables 1 by 1 to see which results in a decrease in the AIC value
+```{r}
+backward_model <- step(full_model, direction = 'backward', 
+                       scope = formula(null_model))
+summary(backward_model)
+```
+* removes variables that would give it a higher AIC until there are no more of that type
+* forward selection and backward selection DON'T always give us the same model
+
+
+###### Using both selection methods
+* use the full model for both and direction as 'both'
+```{r}
+selected_model <- step(full_model, direction = 'both', 
+                       scope = formula(full_model))
+summary(selected_model)
 ```
 
 
-
-## Thursday, Jan 19
+## Thursday, Feb 18
 
 
 
@@ -59,18 +186,3 @@ Today, I learnt the following concepts in class:
 1. Item 2
 1. Item 3
 :::
-
-Provide more concrete details here, e.g., 
-
-In class we learnt how to use the `map` function to create multiple regression diagnostic plots
-
-```{R results='hide', fig.height=4}
-par(mfcol=c(2, 3), mar=c(3.5, 3.5, 2, 1), mgp=c(2.4, 0.8, 0))
-mtcars %>%
-  split(.$cyl) %>%
-  map(~ lm(mpg ~ wt, data = .x)) %>%
-  map(function(x)plot(x, which=c(1, 2)))
-```
-
-
-[^footnote]: You can include some footnotes here
