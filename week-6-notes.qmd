@@ -117,7 +117,7 @@ R <- df %>%
 R
 ```
 * Correlations are between -1 and 1
-* Can come up with $p$-value for a correlatin value to see if 
+* Can come up with $p$-value for a correlation value to see if 
 
 ```{r}
 library(corrplot)
@@ -150,7 +150,8 @@ vif_model <- lm(medv ~ ., df)
 vif(vif_model) %>% knitr::kable()
 ```
 * can drop a subset of the variables that don't explain enough the variability in the $R^2$
-* by adding mroe variables, $R^2$ goes up --> now you can ask what variables leads to the highest increase in $R^2$ /more significant/good predictors and have low variance inflation 
+* by adding more variables, $R^2$ goes up --> now you can ask what variables 
+  leads to the highest increase in $R^2$ /more significant/good predictors and have low variance inflation 
 * high inflation factor = anything greater than 2 
 * low inflation factor = anything less than 2
 
