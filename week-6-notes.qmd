@@ -52,6 +52,41 @@ broom::tidy(full_model)
 All variables are significant other than the industry and age
 
 
+Boxplot of the variables
+```{r}
+df %>%
+  keep(is.numeric) %>%
+  gather() %>%
+  ggplot() +
+  geom_boxplot(aes(y = value)) + 
+  facet_wrap(~ key, scales = 'free')
+```
+
+
+Scatterplot of the variables
+```{r}
+df %>%
+  select(!chas) %>%
+  gather(key, val, medv) %>%
+  ggplot(aes(x = val, y = medv)) + 
+  geom_point(alpha = 0.1) + 
+  stat_smooth(formula = y ~ x, method = 'lm') +
+  facet_wrap(~key, scales = 'free')
+```
+
+
+Histograms
+```{r}
+df %>%
+  keep(is.numeric) %>%
+  gather() %>%
+  ggplot() + 
+  geom_histogram(aes(value)) + 
+  facet_wrap(~ key, scales = 'free')
+```
+
+
+
 When done by itself, a variable is very significant, but when done with other $p$-values then the variable may not be significant (ex. indus)
 
 * If $p$-value is < 0.05, then you reject the null as you have significant evidence for the alternative hypothesis
@@ -65,6 +100,14 @@ When done by itself, a variable is very significant, but when done with other $p
 
 ```
 
+```{r}
+plot(medv ~ indus, df)
+abline(lm(medv ~ indus), col = 'red')
+model_indus <- lm(medv ~ indus, df)
+summary(model_indus)
+```
+
+
 
 #### Correlation plots/tables
 ```{r}
@@ -72,7 +115,6 @@ R <- df %>%
   keep(is.numeric) %>%
   cor()
 R
-
 ```
 * Correlations are between -1 and 1
 * Can come up with $p$-value for a correlatin value to see if 
@@ -150,7 +192,7 @@ summary(selected_model)
 summary(full_model)
 summary(selected_model)
 ```
-### Variable Selection
+### Variable Selection 
 
 
 ### Shirnkage Estimators
