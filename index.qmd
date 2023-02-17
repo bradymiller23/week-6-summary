@@ -4,8 +4,8 @@ author: "Brady Miller"
 title-block-banner: true
 title-block-style: default  
 toc: true
-format: html
-# format: pdf
+#format: html
+format: pdf
 --- 
 
 ---
@@ -169,20 +169,3 @@ selected_model <- step(full_model, direction = 'both',
                        scope = formula(full_model))
 summary(selected_model)
 ```
-
-
-## Thursday, Feb 18
-
-
-
-::: {.callout-important}
-## TIL
-
-Include a _very brief_ summary of what you learnt in this class here. 
-
-Today, I learnt the following concepts in class:
-
-1. Item 1
-1. Item 2
-1. Item 3
-:::
